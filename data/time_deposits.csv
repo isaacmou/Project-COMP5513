@@ -1,0 +1,6 @@
+instrument_id,name,category,annual_rate,tenor_months,min_deposit_hkd,protection,eligible_notes,source,as_of_date
+td_3m_major,Major Bank HKD Time Deposit 3M,time_deposit,0.0320,3,10000,DPS_800k,Illustrative best-of major banks,Curated from HSBC/BOC/Hang Seng rate pages,2026-09-15
+td_6m_major,Major Bank HKD Time Deposit 6M,time_deposit,0.0300,6,10000,DPS_800k,Illustrative best-of major banks,Curated from HSBC/BOC/Hang Seng rate pages,2026-09-15
+td_12m_major,Major Bank HKD Time Deposit 12M,time_deposit,0.0280,12,10000,DPS_800k,Illustrative best-of major banks,Curated from HSBC/BOC/Hang Seng rate pages,2026-09-15
+td_24m_major,Major Bank HKD Time Deposit 24M,time_deposit,0.0260,24,50000,DPS_800k,Longer tenor; early uplift may forfeit interest,Curated from major bank rate pages,2026-09-15
+td_1m_promo,Promotional HKD Time Deposit 1M,time_deposit,0.0380,1,100000,DPS_800k,New-fund promo; not always available,Curated from bank promo pages,2026-09-15

@@ -1,0 +1,18 @@
+[project]
+name = "goalwise-hk"
+version = "0.1.0"
+description = "Monte Carlo savings and investment goal planner for Hong Kong households (COMP5513)"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26.0",
+    "pandas>=2.1.0",
+    "streamlit>=1.32.0",
+    "plotly>=5.18.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

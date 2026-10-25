@@ -1,0 +1,6 @@
+instrument_id,name,category,annual_rate,tenor_months,min_deposit_hkd,protection,eligible_notes,source,as_of_date
+sav_hsbc_basic,HSBC Everyday Global Savings,savings,0.0010,0,0,DPS_800k,Standard retail savings,HSBC HK published rates,2026-09-15
+sav_boc_smart,BOCHK SmartSave,savings,0.0035,0,0,DPS_800k,Standard retail savings,BOCHK published rates,2026-09-15
+sav_hangseng_plus,Hang Seng Prestige Savings,savings,0.0025,0,10000,DPS_800k,Higher balance tier,Hang Seng Bank published rates,2026-09-15
+sav_scb_bonus,Standard Chartered Bonus$aver,savings,0.0120,0,0,DPS_800k,Bonus rate subject to conditions,SCB HK published rates,2026-09-15
+sav_dbs_multiplier,DBS Multiplier Account,savings,0.0180,0,0,DPS_800k,Requires salary/spend criteria,DBS HK published rates,2026-09-15

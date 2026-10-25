@@ -1,0 +1,4 @@
+instrument_id,name,category,annual_rate,tenor_months,min_deposit_hkd,protection,eligible_notes,coupon_type,min_rate,source,as_of_date
+ibond_illustrative,iBond (illustrative retail issue),ibond,0.0250,36,10000,sovereign,HK residents; subscription via banks/brokers,inflation_linked,0.0200,HKSAR Government Bond Programme,2026-09-01
+silver_bond_illustrative,Silver Bond (illustrative),silver_bond,0.0400,36,10000,sovereign,Aged 60+ HK residents only,inflation_linked_min,0.0400,HKSAR Government Bond Programme,2026-09-01
+green_bond_illustrative,Retail Green Bond (illustrative),green_bond,0.0350,36,10000,sovereign,HK residents; green use-of-proceeds,fixed_or_floating,0.0300,HKSAR Government Bond Programme,2026-09-01
