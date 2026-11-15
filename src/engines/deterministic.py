@@ -11,6 +11,36 @@ import numpy as np
 from src.models.instruments import GoalInputs, Instrument
 
 
+def nominal_monthly_rate(annual_rate: float) -> float:
+    """Convert annual rate using r = annual/12 (progress-report / bank-style convention).
+
+    The live engine uses effective monthly compounding via
+    ``(1 + annual)**(1/12) - 1``. This helper exists so known-answer
+    benchmarks published with the nominal/12 convention remain reproducible.
+    """
+    return float(annual_rate) / 12.0
+
+
+def nominal_real_value(nominal: float, annual_inflation: float, months: int) -> float:
+    """Deflate using monthly inflation = annual/12 (matches report Table 4)."""
+    if months <= 0:
+        return float(nominal)
+    monthly_inf = float(annual_inflation) / 12.0
+    return float(nominal) / ((1.0 + monthly_inf) ** months)
+
+
+def inflated_target(goal_amount: float, annual_inflation: float, months: int) -> float:
+    """Future nominal amount that preserves today's purchasing power of ``goal_amount``.
+
+    Uses effective monthly inflation ``(1+π)^(1/12)-1``, consistent with
+    ``real_value`` in the live engine.
+    """
+    if months <= 0:
+        return float(goal_amount)
+    monthly_inf = (1.0 + float(annual_inflation)) ** (1.0 / 12.0) - 1.0
+    return float(goal_amount) * ((1.0 + monthly_inf) ** months)
+
+
 def future_value(
     principal: float,
     monthly_contribution: float,

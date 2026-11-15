@@ -17,13 +17,27 @@ class MonteCarloResult:
     instrument_name: str
     n_paths: int
     probability_success: float
+    probability_success_real: float
     expected_final_balance: float
     median_final_balance: float
     expected_shortfall: float
+    expected_shortfall_real: float
     final_balances: np.ndarray
     fan_chart: np.ndarray  # shape (3, months+1) for p10, p50, p90
     std_error_of_mean: float
+    std_error_of_proportion: float
+    std_error_of_proportion_real: float
+    inflated_goal: float
+    seed: int
     zero_vol_mean: Optional[float] = None
+
+
+def proportion_standard_error(p_hat: float, n: int) -> float:
+    """Binomial SE of a success proportion: √[p̂(1−p̂)/N]."""
+    if n <= 0:
+        return 0.0
+    p = min(1.0, max(0.0, float(p_hat)))
+    return float(np.sqrt(p * (1.0 - p) / n))
 
 
 def _sample_contributions(
@@ -172,13 +186,29 @@ def run_monte_carlo(
     mean_final = float(finals.mean())
     median_final = float(np.median(finals))
     shortfalls = np.maximum(0.0, goal.goal_amount - finals)
-    # Expected shortfall conditional on missing; also report unconditional average shortfall
+    # Expected shortfall conditional on missing
     if (~success).any():
         expected_shortfall = float(shortfalls[~success].mean())
     else:
         expected_shortfall = 0.0
 
+    # Inflation-adjusted success: meet a future target that preserves today's purchasing power
+    if months > 0:
+        monthly_inf = (1.0 + goal.annual_inflation) ** (1.0 / 12.0) - 1.0
+        inflated_goal = float(goal.goal_amount) * ((1.0 + monthly_inf) ** months)
+    else:
+        inflated_goal = float(goal.goal_amount)
+    success_real = finals >= inflated_goal
+    p_success_real = float(success_real.mean())
+    shortfalls_real = np.maximum(0.0, inflated_goal - finals)
+    if (~success_real).any():
+        expected_shortfall_real = float(shortfalls_real[~success_real].mean())
+    else:
+        expected_shortfall_real = 0.0
+
     se = float(finals.std(ddof=1) / np.sqrt(n_paths)) if n_paths > 1 else 0.0
+    se_p = proportion_standard_error(p_success, n_paths)
+    se_p_real = proportion_standard_error(p_success_real, n_paths)
 
     if store_paths_for_fan and months >= 0:
         fan = np.vstack(
@@ -209,12 +239,18 @@ def run_monte_carlo(
         instrument_name=instrument.name,
         n_paths=n_paths,
         probability_success=p_success,
+        probability_success_real=p_success_real,
         expected_final_balance=mean_final,
         median_final_balance=median_final,
         expected_shortfall=expected_shortfall,
+        expected_shortfall_real=expected_shortfall_real,
         final_balances=finals,
         fan_chart=fan,
         std_error_of_mean=se,
+        std_error_of_proportion=se_p,
+        std_error_of_proportion_real=se_p_real,
+        inflated_goal=inflated_goal,
+        seed=int(goal.seed),
         zero_vol_mean=zero_vol_mean,
     )
 

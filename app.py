@@ -22,9 +22,14 @@ from src.engines.comparison import (
     compare_instruments,
     what_if_adjustments,
 )
-from src.engines.deterministic import monthly_path_deterministic, project_deterministic
+from src.engines.deterministic import (
+    inflated_target,
+    monthly_path_deterministic,
+    project_deterministic,
+    required_monthly_contribution,
+)
 from src.engines.monte_carlo import run_monte_carlo
-from src.models.instruments import GoalInputs
+from src.models.instruments import GoalInputs, filter_eligible_instruments
 
 st.set_page_config(
     page_title="GoalWise HK",
@@ -177,6 +182,18 @@ def main() -> None:
         inflation = inflation_pct / 100.0
         st.caption(f"Historical mean CPI (curated series): {default_inflation:.1%}")
 
+        st.header("Eligibility")
+        hk_resident = st.checkbox("Hong Kong resident", value=True)
+        age = st.number_input(
+            "Age (years)",
+            min_value=18,
+            max_value=100,
+            value=35,
+            step=1,
+            help="Silver Bonds typically require age 60+. Used only to filter instruments.",
+        )
+        st.caption(METRIC_EXPLAINERS["eligibility"])
+
         st.header("Uncertainty")
         n_paths = st.select_slider(
             "Monte Carlo paths",
@@ -200,8 +217,21 @@ def main() -> None:
             format="%.2f",
         )
 
-        names = [i.name for i in instruments]
-        selected_name = st.selectbox("Focus instrument", names, index=min(5, len(names) - 1))
+        eligible = filter_eligible_instruments(
+            instruments,
+            age=int(age),
+            hk_resident=bool(hk_resident),
+        )
+        if not eligible:
+            st.error("No instruments match the current eligibility profile.")
+            return
+
+        names = [i.name for i in eligible]
+        selected_name = st.selectbox(
+            "Focus instrument",
+            names,
+            index=min(5, len(names) - 1),
+        )
         run = st.button("Run planner", type="primary", use_container_width=True)
 
     goal = GoalInputs(
@@ -217,7 +247,8 @@ def main() -> None:
         n_paths=int(n_paths),
         seed=42,
     )
-    focus = next(i for i in instruments if i.name == selected_name)
+    focus = next(i for i in eligible if i.name == selected_name)
+    excluded = [i.name for i in instruments if i not in eligible]
 
     if not run and "ran" not in st.session_state:
         st.markdown("### How it works")
@@ -228,10 +259,10 @@ def main() -> None:
         )
         cols = st.columns(3)
         cols[0].markdown(METRIC_EXPLAINERS["probability_success"])
-        cols[1].markdown(METRIC_EXPLAINERS["expected_shortfall"])
+        cols[1].markdown(METRIC_EXPLAINERS["probability_success_real"])
         cols[2].markdown(METRIC_EXPLAINERS["dps"])
         st.markdown(METRIC_EXPLAINERS["monte_carlo"])
-        with st.expander("Curated instruments in this build"):
+        with st.expander("Curated instruments in this build (eligibility-filtered)"):
             rows = [
                 {
                     "Name": i.name,
@@ -241,9 +272,11 @@ def main() -> None:
                     "As of": i.as_of_date,
                     "Source": i.source,
                 }
-                for i in instruments
+                for i in eligible
             ]
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            if excluded:
+                st.caption("Excluded by eligibility: " + ", ".join(excluded))
         return
 
     st.session_state["ran"] = True
@@ -253,24 +286,48 @@ def main() -> None:
         mc = run_monte_carlo(focus, goal, inflation_history=hist)
         # Use fewer paths for full comparison for responsiveness
         cmp_goal = replace(goal, n_paths=min(goal.n_paths, 2_500))
-        comparison = compare_instruments(instruments, cmp_goal, inflation_history=hist)
+        comparison = compare_instruments(eligible, cmp_goal, inflation_history=hist)
         what_ifs = what_if_adjustments(focus, cmp_goal, inflation_history=hist)
+
+    future_goal = inflated_target(goal.goal_amount, goal.annual_inflation, goal.horizon_months)
+    req_real = required_monthly_contribution(
+        future_goal,
+        goal.current_savings,
+        focus.effective_monthly_rate(goal.annual_inflation),
+        goal.horizon_months,
+    )
 
     st.markdown(f"### Results — {focus.name}")
     st.caption(
         f"Assumptions: {goal.horizon_months} months · "
         f"rate {focus.annual_rate:.2%} (as of {focus.as_of_date}) · "
         f"inflation {goal.annual_inflation:.1%} · {mc.n_paths:,} paths · "
-        f"source: {focus.source}"
+        f"seed {mc.seed} · source: {focus.source}"
     )
+    if excluded:
+        st.caption("Excluded by eligibility: " + ", ".join(excluded))
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Probability of success", f"{mc.probability_success:.1%}")
-    m2.metric("Expected shortfall (if miss)", format_hkd(mc.expected_shortfall))
-    m3.metric("Expected final balance", format_hkd(mc.expected_final_balance))
-    m4.metric("Deterministic projection", format_hkd(det.projected_nominal))
+    m1.metric(
+        "P(success) nominal",
+        f"{mc.probability_success:.1%}",
+        help=f"SE = {mc.std_error_of_proportion:.2%} (binomial)",
+    )
+    m2.metric(
+        "P(success) real target",
+        f"{mc.probability_success_real:.1%}",
+        help=f"SE = {mc.std_error_of_proportion_real:.2%} · inflated goal {format_hkd(mc.inflated_goal)}",
+    )
+    m3.metric("Expected shortfall (if miss)", format_hkd(mc.expected_shortfall))
+    m4.metric("Expected final balance", format_hkd(mc.expected_final_balance))
+
+    s1, s2, s3 = st.columns(3)
+    s1.metric("Binomial SE (nominal P)", f"{mc.std_error_of_proportion:.2%}")
+    s2.metric("Binomial SE (real P)", f"{mc.std_error_of_proportion_real:.2%}")
+    s3.metric("Deterministic projection", format_hkd(det.projected_nominal))
 
     st.markdown(METRIC_EXPLAINERS["probability_success"])
+    st.markdown(METRIC_EXPLAINERS["probability_success_real"])
     st.markdown(METRIC_EXPLAINERS["nominal_vs_real"])
 
     c1, c2 = st.columns(2)
@@ -318,11 +375,16 @@ def main() -> None:
     )
     st.plotly_chart(fig_det, use_container_width=True)
 
-    r1, r2, r3 = st.columns(3)
+    r1, r2, r3, r4 = st.columns(4)
     r1.metric("Real (CPI-deflated) projection", format_hkd(det.projected_real))
-    r2.metric("Required monthly to hit goal", format_hkd(det.required_monthly))
+    r2.metric("Required monthly (nominal goal)", format_hkd(det.required_monthly))
+    r3.metric("Required monthly (real goal)", format_hkd(req_real))
     ttm = det.time_to_goal_months
-    r3.metric("Time to goal (deterministic)", f"{ttm} mo" if ttm is not None else "Unreachable")
+    r4.metric("Time to goal (deterministic)", f"{ttm} mo" if ttm is not None else "Unreachable")
+    st.caption(
+        f"Inflated goal preserving today's purchasing power: {format_hkd(future_goal)} "
+        f"(assumed inflation {goal.annual_inflation:.1%})."
+    )
 
     st.markdown(f"**Protection:** {focus.protection_label}")
     st.markdown(explainer_for_category(focus.category))
@@ -330,8 +392,9 @@ def main() -> None:
 
     st.markdown("### Instrument comparison")
     st.caption(
-        "Side-by-side outcomes across Hong Kong savings, time deposits, and retail government bonds. "
-        f"Comparison uses {cmp_goal.n_paths:,} paths for speed."
+        "Side-by-side outcomes across eligibility-filtered Hong Kong savings, time deposits, "
+        f"and retail government bonds. Comparison uses {cmp_goal.n_paths:,} paths for speed "
+        f"(seed {cmp_goal.seed})."
     )
     st.dataframe(comparison_to_dataframe(comparison), use_container_width=True, hide_index=True)
 
@@ -380,7 +443,15 @@ def main() -> None:
     )
 
     with st.expander("Learn more — education layer"):
-        for key in ("monte_carlo", "nominal_vs_real", "expected_shortfall", "dps"):
+        for key in (
+            "monte_carlo",
+            "probability_success",
+            "probability_success_real",
+            "nominal_vs_real",
+            "expected_shortfall",
+            "eligibility",
+            "dps",
+        ):
             st.markdown(METRIC_EXPLAINERS[key])
         st.markdown("#### Instrument types")
         for cat in ("savings", "time_deposit", "ibond", "silver_bond", "green_bond"):

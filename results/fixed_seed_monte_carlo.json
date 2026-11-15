@@ -1,0 +1,39 @@
+{
+  "generated_at_utc": "2026-11-15T09:38:21.746462+00:00",
+  "configuration": {
+    "instrument_id": "td_3m_major",
+    "instrument_name": "Major Bank HKD Time Deposit 3M",
+    "goal_amount": 400000.0,
+    "horizon_months": 48,
+    "current_savings": 50000.0,
+    "monthly_contribution": 6500.0,
+    "annual_inflation": 0.02,
+    "n_paths": 5000,
+    "seed": 42,
+    "contribution_volatility": 0.15,
+    "expense_shock_prob": 0.05
+  },
+  "deterministic": {
+    "projected_nominal": 388784.92,
+    "projected_real": 359177.17,
+    "required_monthly": 6719.53,
+    "required_monthly_real_goal": 7364.94,
+    "inflated_goal": 432972.86,
+    "annual_rate_used": 0.032,
+    "compounding": "effective_monthly_(1+r)**(1/12)-1"
+  },
+  "monte_carlo": {
+    "n_paths": 5000,
+    "seed": 42,
+    "probability_success": 0.0066,
+    "probability_success_real": 0.0,
+    "std_error_of_proportion": 0.001145114841402381,
+    "std_error_of_proportion_real": 0.0,
+    "std_error_of_mean": 161.8083928633969,
+    "expected_final_balance": 375851.27,
+    "median_final_balance": 376501.75,
+    "expected_shortfall": 24331.82,
+    "expected_shortfall_real": 57121.6,
+    "inflated_goal": 432972.86
+  }
+}

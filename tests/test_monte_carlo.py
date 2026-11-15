@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from src.engines.deterministic import future_value
-from src.engines.monte_carlo import run_monte_carlo
+from src.engines.deterministic import future_value, inflated_target
+from src.engines.monte_carlo import proportion_standard_error, run_monte_carlo
 from src.models.instruments import GoalInputs, Instrument, ProtectionStatus
 
 
@@ -80,3 +80,44 @@ def test_more_paths_tighter_se():
     se_small = run_monte_carlo(inst, g_small, inflation_history=hist).std_error_of_mean
     se_large = run_monte_carlo(inst, g_large, inflation_history=hist).std_error_of_mean
     assert se_large < se_small
+
+
+def test_proportion_standard_error_formula():
+    assert proportion_standard_error(0.5, 10_000) == pytest.approx(0.005, rel=1e-12)
+    assert proportion_standard_error(0.0, 1_000) == 0.0
+    assert proportion_standard_error(1.0, 1_000) == 0.0
+
+
+def test_real_success_uses_inflated_goal():
+    inst = _inst(0.03)
+    goal = _goal(n_paths=3_000)
+    hist = [0.01, 0.02, 0.018, 0.022]
+    mc = run_monte_carlo(inst, goal, inflation_history=hist)
+    expected_inflated = inflated_target(goal.goal_amount, goal.annual_inflation, goal.horizon_months)
+    assert mc.inflated_goal == pytest.approx(expected_inflated)
+    assert mc.probability_success_real <= mc.probability_success + 1e-12
+    assert mc.std_error_of_proportion == pytest.approx(
+        proportion_standard_error(mc.probability_success, mc.n_paths)
+    )
+    assert mc.std_error_of_proportion_real == pytest.approx(
+        proportion_standard_error(mc.probability_success_real, mc.n_paths)
+    )
+    assert mc.seed == goal.seed
+
+
+def test_zero_inflation_real_matches_nominal_success():
+    inst = _inst(0.03)
+    goal = GoalInputs(
+        goal_amount=200_000,
+        horizon_months=36,
+        current_savings=40_000,
+        monthly_contribution=4_000,
+        annual_inflation=0.0,
+        contribution_volatility=0.1,
+        expense_shock_prob=0.02,
+        n_paths=2_000,
+        seed=11,
+    )
+    mc = run_monte_carlo(inst, goal, inflation_history=[0.0])
+    assert mc.inflated_goal == pytest.approx(goal.goal_amount)
+    assert mc.probability_success_real == pytest.approx(mc.probability_success)

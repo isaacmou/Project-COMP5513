@@ -5,6 +5,8 @@ A Monte Carlo savings and investment goal planner for Hong Kong households
 
 GoalWise HK estimates **not only when** a household might reach a savings goal, but **how likely** it is to get there by a chosen date. It compares local low-risk instruments — savings accounts, time deposits, iBonds, Silver Bonds, and retail Green Bonds — in nominal and inflation-adjusted terms.
 
+繁體中文系統與方法說明：[系統與方法說明.md](系統與方法說明.md)
+
 ## Features
 
 1. **Deterministic goal engine** — time-to-goal, required monthly saving, nominal and real projections  
@@ -17,6 +19,11 @@ GoalWise HK estimates **not only when** a household might reach a savings goal, 
 - **Inflation-linked bonds** (iBond / Silver Bond style): coupon = `max(min_rate, inflation)` using the assumed CPI path (deterministic) or bootstrapped historical YoY CPI (Monte Carlo).  
 - **Time deposits and bonds with a tenor**: the drawn rate is held constant for each `tenor_months` block, then redrawn at rollover (reinvestment risk).  
 - **Savings** (`tenor_months = 0`): rate shocks follow yearly inflation blocks without a lock-in tenor.  
+
+### Compounding convention
+
+- **Live engine** (deterministic + Monte Carlo + UI): monthly rate = `(1 + annual)^(1/12) − 1` (effective monthly compounding). Real purchasing power uses the matching monthly inflation factor.
+- **Progress-report Table 4 benchmark**: independently calculated with nominal monthly `r = annual/12` and inflation `π/12`. Reproduced in `tests/test_report_benchmark.py` via `nominal_monthly_rate` / `nominal_real_value` helpers — those helpers are for auditability, not the live path.  
 
 ## Quick start
 
@@ -48,8 +55,12 @@ pytest -q
 KPIs covered in tests:
 
 - Closed-form annuity / accumulation math  
+- Progress-report Table 4 known-answer benchmark (`r = annual/12`)  
 - Zero-volatility Monte Carlo converges to the deterministic future value  
 - Standard error of the mean &lt; 1% of mean at 10,000 paths  
+- Binomial SE of success proportion √[p̂(1−p̂)/N]  
+- Inflation-adjusted (real-target) success probability  
+- Eligibility filters (age / HK residency)  
 
 ## Project layout
 
@@ -61,8 +72,20 @@ src/
   models/              Instrument and goal dataclasses
   education.py         IFEC-style blurbs + disclaimer
 data/                  Rate, bond, and CPI seeds (source + as_of_date)
+docs/                  Data dictionary and meeting log
+results/               Fixed-seed MC export and pytest evidence
+scripts/               Evidence export helpers
 tests/
 ```
+
+## Evidence artefacts
+
+```bash
+pytest -q | tee results/pytest_output.txt
+py -3 scripts/export_fixed_seed_results.py
+```
+
+See [`docs/data_dictionary.md`](docs/data_dictionary.md) for column definitions and eligibility rules.
 
 ## Data provenance
 

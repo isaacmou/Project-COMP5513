@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, Sequence
 
 
 class ProtectionStatus(str, Enum):
@@ -59,6 +59,37 @@ class Instrument:
         if self.protection == ProtectionStatus.DPS_800K:
             return "Deposit Protection Scheme (up to HK$800,000 per depositor per bank)"
         return "Hong Kong SAR Government (sovereign)"
+
+    @property
+    def requires_hk_resident(self) -> bool:
+        """Retail HKSAR bonds are typically offered to Hong Kong residents."""
+        return self.category in ("ibond", "silver_bond", "green_bond")
+
+    @property
+    def min_age(self) -> Optional[int]:
+        """Minimum age if the product is age-restricted (Silver Bond: 60+)."""
+        if self.category == "silver_bond":
+            return 60
+        return None
+
+    def is_eligible(self, age: Optional[int] = None, hk_resident: bool = True) -> bool:
+        """Return whether a user profile can subscribe / hold this instrument."""
+        if self.requires_hk_resident and not hk_resident:
+            return False
+        min_age = self.min_age
+        if min_age is not None:
+            if age is None or age < min_age:
+                return False
+        return True
+
+
+def filter_eligible_instruments(
+    instruments: Sequence[Instrument],
+    age: Optional[int] = None,
+    hk_resident: bool = True,
+) -> List[Instrument]:
+    """Keep instruments the user can buy under age / residency assumptions."""
+    return [i for i in instruments if i.is_eligible(age=age, hk_resident=hk_resident)]
 
 
 @dataclass(frozen=True)

@@ -2,9 +2,14 @@
 
 METRIC_EXPLAINERS = {
     "probability_success": (
-        "**Probability of success** is the share of simulated household paths that "
-        "reach your goal amount by the deadline. It is not a guarantee — real life "
-        "can fall outside the scenarios we model."
+        "**Probability of success (nominal)** is the share of simulated household "
+        "paths that reach your stated goal amount by the deadline. It is not a "
+        "guarantee — real life can fall outside the scenarios we model."
+    ),
+    "probability_success_real": (
+        "**Probability of success (real target)** uses an inflation-adjusted goal: "
+        "the future amount that preserves today's purchasing power of your target. "
+        "Meeting the nominal dollar figure may still leave you short in real terms."
     ),
     "expected_shortfall": (
         "**Expected shortfall** is the average amount you would still need if you "
@@ -19,13 +24,21 @@ METRIC_EXPLAINERS = {
     "monte_carlo": (
         "The **Monte Carlo engine** simulates thousands of possible lives: lumpy "
         "contributions, unexpected expenses, and shifting rates/inflation. Bank "
-        "calculators that assume a fixed monthly deposit cannot express this uncertainty."
+        "calculators that assume a fixed monthly deposit cannot express this uncertainty. "
+        "The **standard error of the proportion** √[p̂(1−p̂)/N] shows sampling "
+        "uncertainty in the estimated success probability."
     ),
     "dps": (
         "Eligible **bank deposits** in Hong Kong are protected by the Deposit "
         "Protection Scheme up to **HK$800,000** per depositor per bank (raised from "
         "HK$500,000 from October 2024). **Government retail bonds** carry sovereign "
         "credit rather than DPS coverage — different forms of safety."
+    ),
+    "eligibility": (
+        "**Eligibility filters** hide products you cannot buy under the profile you "
+        "set (for example Silver Bonds typically require age 60+, and retail "
+        "government bonds are aimed at Hong Kong residents). Filtered views avoid "
+        "implying every household can access every instrument."
     ),
 }
 

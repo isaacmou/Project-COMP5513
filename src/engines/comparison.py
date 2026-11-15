@@ -7,7 +7,11 @@ from typing import List, Optional, Sequence
 
 import pandas as pd
 
-from src.engines.deterministic import project_deterministic
+from src.engines.deterministic import (
+    inflated_target,
+    project_deterministic,
+    required_monthly_contribution,
+)
 from src.engines.monte_carlo import run_monte_carlo
 from src.models.instruments import GoalInputs, Instrument
 
@@ -22,11 +26,17 @@ class ComparisonRow:
     projected_nominal: float
     projected_real: float
     required_monthly: float
+    required_monthly_real: float
     time_to_goal_months: Optional[int]
     probability_success: float
+    probability_success_real: float
     expected_shortfall: float
+    expected_shortfall_real: float
     expected_final_balance: float
     median_final_balance: float
+    std_error_of_proportion: float
+    std_error_of_proportion_real: float
+    inflated_goal: float
     source: str
     as_of_date: str
     eligible_notes: str
@@ -41,17 +51,35 @@ def compare_instruments(
     rows: List[ComparisonRow] = []
     for inst in instruments:
         det = project_deterministic(inst, goal)
+        future_goal = inflated_target(goal.goal_amount, goal.annual_inflation, goal.horizon_months)
+        r_m = inst.effective_monthly_rate(goal.annual_inflation)
+        req_real = required_monthly_contribution(
+            future_goal,
+            goal.current_savings,
+            r_m,
+            goal.horizon_months,
+        )
         if run_mc:
             mc = run_monte_carlo(inst, goal, inflation_history=inflation_history)
             p_success = mc.probability_success
+            p_success_real = mc.probability_success_real
             shortfall = mc.expected_shortfall
+            shortfall_real = mc.expected_shortfall_real
             expected_final = mc.expected_final_balance
             median_final = mc.median_final_balance
+            se_p = mc.std_error_of_proportion
+            se_p_real = mc.std_error_of_proportion_real
+            inflated_goal = mc.inflated_goal
         else:
             p_success = 1.0 if det.meets_goal else 0.0
+            p_success_real = 1.0 if det.projected_nominal >= future_goal else 0.0
             shortfall = det.shortfall_nominal
+            shortfall_real = max(0.0, future_goal - det.projected_nominal)
             expected_final = det.projected_nominal
             median_final = det.projected_nominal
+            se_p = 0.0
+            se_p_real = 0.0
+            inflated_goal = future_goal
 
         rows.append(
             ComparisonRow(
@@ -63,11 +91,17 @@ def compare_instruments(
                 projected_nominal=det.projected_nominal,
                 projected_real=det.projected_real,
                 required_monthly=det.required_monthly,
+                required_monthly_real=req_real,
                 time_to_goal_months=det.time_to_goal_months,
                 probability_success=p_success,
+                probability_success_real=p_success_real,
                 expected_shortfall=shortfall,
+                expected_shortfall_real=shortfall_real,
                 expected_final_balance=expected_final,
                 median_final_balance=median_final,
+                std_error_of_proportion=se_p,
+                std_error_of_proportion_real=se_p_real,
+                inflated_goal=inflated_goal,
                 source=inst.source,
                 as_of_date=inst.as_of_date,
                 eligible_notes=inst.eligible_notes,
@@ -86,12 +120,18 @@ def comparison_to_dataframe(rows: Sequence[ComparisonRow]) -> pd.DataFrame:
                 "Category": r.category,
                 "Annual rate": f"{r.annual_rate:.2%}",
                 "P(success)": f"{r.probability_success:.1%}",
+                "P(success) SE": f"{r.std_error_of_proportion:.2%}",
+                "P(success, real target)": f"{r.probability_success_real:.1%}",
+                "P(success, real) SE": f"{r.std_error_of_proportion_real:.2%}",
                 "Expected balance (HK$)": round(r.expected_final_balance, 0),
                 "Median balance (HK$)": round(r.median_final_balance, 0),
                 "Expected shortfall (HK$)": round(r.expected_shortfall, 0),
+                "Expected shortfall vs real target (HK$)": round(r.expected_shortfall_real, 0),
                 "Deterministic projection (HK$)": round(r.projected_nominal, 0),
                 "Real projection (HK$)": round(r.projected_real, 0),
                 "Required monthly (HK$)": round(r.required_monthly, 0),
+                "Required monthly (real goal) (HK$)": round(r.required_monthly_real, 0),
+                "Inflated goal (HK$)": round(r.inflated_goal, 0),
                 "Time to goal (months)": r.time_to_goal_months if r.time_to_goal_months is not None else "—",
                 "Protection": r.protection,
                 "Source": r.source,
