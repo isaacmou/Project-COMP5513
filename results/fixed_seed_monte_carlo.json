@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-11-15T09:38:21.746462+00:00",
+  "generated_at_utc": "2026-11-21T17:04:21.874988+00:00",
   "configuration": {
-    "instrument_id": "td_3m_major",
-    "instrument_name": "Major Bank HKD Time Deposit 3M",
+    "instrument_id": "td_24m_major",
+    "instrument_name": "Major Bank HKD Time Deposit 24M",
     "goal_amount": 400000.0,
     "horizon_months": 48,
     "current_savings": 50000.0,
@@ -14,26 +14,26 @@
     "expense_shock_prob": 0.05
   },
   "deterministic": {
-    "projected_nominal": 388784.92,
-    "projected_real": 359177.17,
-    "required_monthly": 6719.53,
-    "required_monthly_real_goal": 7364.94,
+    "projected_nominal": 383634.24,
+    "projected_real": 354418.74,
+    "required_monthly": 6824.1,
+    "required_monthly_real_goal": 7477.07,
     "inflated_goal": 432972.86,
-    "annual_rate_used": 0.032,
+    "annual_rate_used": 0.026,
     "compounding": "effective_monthly_(1+r)**(1/12)-1"
   },
   "monte_carlo": {
     "n_paths": 5000,
     "seed": 42,
-    "probability_success": 0.0066,
+    "probability_success": 0.0028,
     "probability_success_real": 0.0,
-    "std_error_of_proportion": 0.001145114841402381,
+    "std_error_of_proportion": 0.0007472830788931326,
     "std_error_of_proportion_real": 0.0,
-    "std_error_of_mean": 161.8083928633969,
-    "expected_final_balance": 375851.27,
-    "median_final_balance": 376501.75,
-    "expected_shortfall": 24331.82,
-    "expected_shortfall_real": 57121.6,
+    "std_error_of_mean": 163.27818293144176,
+    "expected_final_balance": 370893.54,
+    "median_final_balance": 371533.79,
+    "expected_shortfall": 29195.21,
+    "expected_shortfall_real": 62079.32,
     "inflated_goal": 432972.86
   }
 }

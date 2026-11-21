@@ -12,7 +12,7 @@ from src.data.loader import load_all_instruments, load_bonds, load_cpi, load_sav
 
 def test_load_curated_data_ok():
     instruments = load_all_instruments()
-    assert len(instruments) >= 5
+    assert len(instruments) == 5
     assert all(i.source and i.as_of_date for i in instruments)
     cpi = load_cpi()
     assert "yoy_inflation" in cpi.columns

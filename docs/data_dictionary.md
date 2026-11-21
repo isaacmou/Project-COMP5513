@@ -24,6 +24,14 @@ Curated illustration datasets under `data/`. Every instrument and CPI row carrie
 | `coupon_type` | string | `inflation_linked`, `inflation_linked_min`, or `fixed_or_floating` |
 | `min_rate` | float | Coupon floor for inflation-linked issues (decimal) |
 
+### Curated instruments in this build
+
+| File | Instrument |
+|------|------------|
+| `savings_rates.csv` | HSBC Everyday Global Savings |
+| `time_deposits.csv` | Major Bank HKD Time Deposit 24M |
+| `bonds.csv` | iBond; Silver Bond; Retail Green Bond (illustrative) |
+
 ### Eligibility rules applied in the UI
 
 | Category | HK resident | Minimum age |

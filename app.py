@@ -154,7 +154,14 @@ def main() -> None:
             value=400_000.0,
             step=10_000.0,
         )
-        years = st.slider("Deadline (years)", min_value=1, max_value=15, value=4)
+        years = st.slider(
+            "Deadline (years)",
+            min_value=1.0,
+            max_value=15.0,
+            value=4.0,
+            step=0.5,
+            format="%.1f",
+        )
         current = st.number_input(
             "Current savings (HK$)",
             min_value=0.0,
@@ -190,7 +197,7 @@ def main() -> None:
             max_value=100,
             value=35,
             step=1,
-            help="Silver Bonds typically require age 60+. Used only to filter instruments.",
+            help="Silver Bonds typically require age 60+. Used to filter instruments. iBond and Green Bond require HK residency.",
         )
         st.caption(METRIC_EXPLAINERS["eligibility"])
 
@@ -236,7 +243,7 @@ def main() -> None:
 
     goal = GoalInputs(
         goal_amount=goal_amount,
-        horizon_months=years * 12,
+        horizon_months=int(round(years * 12)),
         current_savings=current,
         monthly_contribution=monthly,
         annual_inflation=inflation,
@@ -254,8 +261,8 @@ def main() -> None:
         st.markdown("### How it works")
         st.write(
             "Enter a Hong Kong dollar goal, deadline, and saving pattern. "
-            "GoalWise compares savings accounts, time deposits, iBonds, Silver Bonds, "
-            "and retail Green Bonds — then estimates **how likely** you are to make it."
+            "GoalWise compares HSBC Everyday Global Savings, a 24-month HKD time deposit, "
+            "an iBond, a Silver Bond, and a retail Green Bond — then estimates **how likely** you are to make it."
         )
         cols = st.columns(3)
         cols[0].markdown(METRIC_EXPLAINERS["probability_success"])
@@ -392,8 +399,8 @@ def main() -> None:
 
     st.markdown("### Instrument comparison")
     st.caption(
-        "Side-by-side outcomes across eligibility-filtered Hong Kong savings, time deposits, "
-        f"and retail government bonds. Comparison uses {cmp_goal.n_paths:,} paths for speed "
+        "Side-by-side outcomes for the five curated instruments "
+        f"(eligibility-filtered). Comparison uses {cmp_goal.n_paths:,} paths for speed "
         f"(seed {cmp_goal.seed})."
     )
     st.dataframe(comparison_to_dataframe(comparison), use_container_width=True, hide_index=True)

@@ -9,12 +9,12 @@ from src.models.instruments import GoalInputs
 
 def test_load_instruments():
     instruments = load_all_instruments()
-    assert len(instruments) >= 5
+    assert len(instruments) == 5
     assert all(i.source and i.as_of_date for i in instruments)
 
 
 def test_compare_ranks_by_success():
-    instruments = load_all_instruments()[:4]
+    instruments = load_all_instruments()
     goal = GoalInputs(
         goal_amount=300_000,
         horizon_months=48,
@@ -25,7 +25,7 @@ def test_compare_ranks_by_success():
     )
     hist = get_inflation_history()
     rows = compare_instruments(instruments, goal, inflation_history=hist)
-    assert len(rows) == 4
+    assert len(rows) == 5
     probs = [r.probability_success for r in rows]
     assert probs == sorted(probs, reverse=True)
 

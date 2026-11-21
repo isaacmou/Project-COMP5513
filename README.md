@@ -3,7 +3,7 @@
 A Monte Carlo savings and investment goal planner for Hong Kong households  
 (COMP5513 Financial Computing — group project).
 
-GoalWise HK estimates **not only when** a household might reach a savings goal, but **how likely** it is to get there by a chosen date. It compares local low-risk instruments — savings accounts, time deposits, iBonds, Silver Bonds, and retail Green Bonds — in nominal and inflation-adjusted terms.
+GoalWise HK estimates **not only when** a household might reach a savings goal, but **how likely** it is to get there by a chosen date. It compares five curated low-risk instruments — HSBC Everyday Global Savings, a 24-month HKD time deposit, an iBond, a Silver Bond, and a retail Green Bond — in nominal and inflation-adjusted terms.
 
 繁體中文系統與方法說明：[系統與方法說明.md](系統與方法說明.md)
 
@@ -16,7 +16,7 @@ GoalWise HK estimates **not only when** a household might reach a savings goal, 
 
 ### How rates are modelled
 
-- **Inflation-linked bonds** (iBond / Silver Bond style): coupon = `max(min_rate, inflation)` using the assumed CPI path (deterministic) or bootstrapped historical YoY CPI (Monte Carlo).  
+- **Inflation-linked bonds** (iBond / Silver Bond in this build): coupon = `max(min_rate, inflation)` using the assumed CPI path (deterministic) or bootstrapped historical YoY CPI (Monte Carlo). The curated Green Bond uses a fixed/floating illustrative rate.  
 - **Time deposits and bonds with a tenor**: the drawn rate is held constant for each `tenor_months` block, then redrawn at rollover (reinvestment risk).  
 - **Savings** (`tenor_months = 0`): rate shocks follow yearly inflation blocks without a lock-in tenor.  
 
